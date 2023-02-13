@@ -1,0 +1,13 @@
+Models:
+    smallobj: 640 384
+    hh_aiv: 640 320 0.29
+    add_stacker: 640 384
+    addquanzhou: 640 384 0.29
+
+Datasets:
+    hh      3840, 2160
+    side    2880, 1860
+    night   1936, 1220
+    port    1920, 1208
+
+detect_thres: 0.29 for side false detection

@@ -1,0 +1,98 @@
+DATASETS:
+  DETECT_CLASSES: ("CAR","PD","Rider","Three","BUS","TRUCK","TRUCKHEAD","VAN","SPECIALCAR")
+  TRAIN: ("kitti_train",)
+  TEST: ("kitti_test",)
+  TRAIN_SPLIT: "train"
+  TEST_SPLIT: "test"
+
+  USE_RIGHT_IMAGE: False
+  CONSIDER_OUTSIDE_OBJS: True
+  FILTER_ANNO_ENABLE: False
+  
+INPUT:
+  HEATMAP_CENTER: '3D'
+  AUG_PARAMS: [[0.5],[640,320,3840,1920,1,0.5,0.01]]
+  AUG_PARAMS_3D: [[0.5],[640,320,3840,1920,0,0.8,0.01],[290]] #[0,0.8,0.01]
+  VAL_PARAMS: [[640,320,3840,1920,0,0,0.01],[290]]
+  WIDTH_TEST: 640
+  HEIGHT_TEST: 384
+  WIDTH_TRAIN: 640
+  HEIGHT_TRAIN: 384
+
+  ORIENTATION: 'multi-bin'
+  MODIFY_ALPHA: False
+  ORIENTATION_BIN_SIZE: 4
+  
+  APPROX_3D_CENTER: 'intersect'
+  ADJUST_BOUNDARY_HEATMAP: True
+  KEYPOINT_VISIBLE_MODIFY: False
+
+MODEL:
+  INPLACE_ABN: False
+  ONLY_TRAIN_2D: False
+  BACKBONE:
+    CONV_BODY: "Vggx2SmallNet"
+    STACKS: 1
+    BLOCKS: 1
+  HEAD:
+    REGRESSION_HEADS: [['2d_dim'], ['3d_offset'], ['corner_offset','keypoint_visible'], ['3d_dim'], ['ori_cls', 'ori_offset'], ['depth'],['center_type']]
+    REGRESSION_CHANNELS: [[4, ], [2, ], [8,8], [3, ], [8, 8], [1, ],[5,]]
+
+    ENABLE_EDGE_FUSION: False
+    TRUNCATION_OUTPUT_FUSION: 'add'
+    EDGE_FUSION_NORM: 'BN'
+    TRUNCATION_OFFSET_LOSS: 'log'
+    NUM_CHANNEL: 128
+    BN_MOMENTUM: 0.1
+
+    USE_NORMALIZATION: "BN"
+    LOSS_TYPE: ["Penalty_Reduced_FocalLoss", "L1", "giou", "L1"]
+
+    MODIFY_INVALID_KEYPOINT_DEPTH: True
+
+    CORNER_LOSS_DEPTH: 'direct'
+    LOSS_NAMES: ['hm_loss', 'bbox_loss', 'depth_loss', 'offset_loss', 'orien_loss', 'dims_loss', 'corner_loss', 'keypoint_loss','keypoint_visible_loss','trunc_offset_loss','center_type_loss']
+    #LOSS_NAMES: ['hm_loss', 'bbox_loss', 'depth_loss', 'offset_loss', 'orien_loss', 'dims_loss', 'corner_loss', 'keypoint_loss', 'keypoint_depth_loss', 'trunc_offset_loss']
+    LOSS_UNCERTAINTY: [True, True, True, True, True, True, True, True, True,True,True]
+    INIT_LOSS_WEIGHT: [1, 1.5, 1, 1, 1, 1, 1, 1, 1,1,1] #[0.5, 0.5, 1, 0.5, 1, 1, 1, 1, 1]
+    
+    CENTER_MODE: 'max'
+    HEATMAP_TYPE: 'centernet'
+    DIMENSION_REG: ['exp', True, False]
+    USE_UNCERTAINTY: False
+
+    DEPTH_MODE: 'inv_sigmoid'
+    OUTPUT_DEPTH: 'direct'
+    DIMENSION_WEIGHT: [1, 1, 1.5]
+    
+    CLASS_WEIGHT: [1, 1, 1, 1, 1, 1,1,1,1]
+    UNCERTAINTY_INIT: True
+
+  REDUCE_LOSS_NORM: True
+  USE_SYNC_BN: False
+
+SOLVER:
+  OPTIMIZER: 'adamw'
+  BASE_LR: 3e-4
+  WEIGHT_DECAY: 1e-5
+  LR_WARMUP: False
+  WARMUP_STEPS: 2000
+
+  # for 1 GPU
+  LR_DECAY: 0.1
+
+  EVAL_AND_SAVE_EPOCH: True
+  EVAL_EPOCH_INTERVAL: 1
+  SAVE_CHECKPOINT_EPOCH_INTERVAL: 2
+  MAX_EPOCHS: 100
+  DECAY_EPOCH_STEPS: [70, 90]
+
+  IMS_PER_BATCH: 8
+  EVAL_INTERVAL: 100
+
+TEST:
+  UNCERTAINTY_AS_CONFIDENCE: False
+  DETECTIONS_THRESHOLD: 0.3
+  METRIC: ['R40']
+
+OUTPUT_DIR: "./output/"
