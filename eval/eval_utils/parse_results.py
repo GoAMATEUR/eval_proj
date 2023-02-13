@@ -676,7 +676,15 @@ def merge_video(save_dir, cube_dir ):
     print("Generating video...")
     imgs = os.listdir(cube_dir)
     imgs.sort()
-    img_test = cv2.imread(os.path.join(cube_dir, imgs[0]))
+    img_sample = None
+    for root, dirs, files in os.walk(cube_dir):
+        for file in files:
+            if file.endswith(".jpg"):
+                img_sample = os.path.join(root, file)
+                break
+        if img_sample is not None:
+            break
+    img_test = cv2.imread(img_sample)
     h, w= img_test.shape[0:2]
     fourcc = cv2.VideoWriter_fourcc(*'MJPG')
     out = cv2.VideoWriter(os.path.join(save_dir,'./25D.avi'), fourcc, 10.0, (w, h))
